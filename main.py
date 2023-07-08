@@ -105,15 +105,18 @@ class MainMenu:
                     if event.key == pygame.K_SPACE:
                         if not self.press:
                             self.press = True
-                            self.Start_button = UIButton(relative_rect=pygame.Rect((825, 850), (256, 64)),
+                            self.Start_button = UIButton(relative_rect=pygame.Rect(((self.settings.width // 2 - 128),
+                                                                                    850), (256, 64)),
                                                          text="Start",
                                                          manager=self.manager,
                                                          object_id=ObjectID(class_id="button"))
-                            self.Records_button = UIButton(relative_rect=pygame.Rect((1364, 850), (256, 64)),
+                            self.Records_button = UIButton(relative_rect=pygame.Rect(((self.settings.width // 2 + 384),
+                                                                                      850), (256, 64)),
                                                            text="Score",
                                                            manager=self.manager,
                                                            object_id=ObjectID(class_id="button"))
-                            self.Quite_button = UIButton(relative_rect=pygame.Rect((300, 850), (256, 64)),
+                            self.Quite_button = UIButton(relative_rect=pygame.Rect(((self.settings.width // 2 - 640),
+                                                                                    850), (256, 64)),
                                                          text="Quite",
                                                          manager=self.manager,
                                                          object_id=ObjectID(class_id="button"))
