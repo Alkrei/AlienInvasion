@@ -76,8 +76,8 @@ class MainMenu:
             self.manager.draw_ui(self.screen)
             self.screen.blit(f2.render(f"Difficulty Level: {self.difficulty_level}", False,
                                        self.settings.WHITE), (800, 950))
-            self.screen.blit(f4.render("Created by Alkrip", False, self.settings.WHITE),
-                             (1650, self.screen.get_rect().bottom-45))
+            self.screen.blit(f4.render(f"{self.settings.by}", False, self.settings.WHITE),
+                             (self.screen.get_rect().width-len(self.settings.by)*16, self.screen.get_rect().bottom-45))
         else:
             if self.blinking:
                 self.screen.blit(f2.render("PRESS START", False, (255, 255, 255)), (850, 850))

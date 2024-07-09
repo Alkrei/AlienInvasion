@@ -33,3 +33,6 @@ class Settings:
         self.BLACK = "#000000"
         self.RED = "#f14f50"
         self.YELLOW = "#ffe200"
+
+        self.by = "Created by Alkrei"
+        self.engine = "Pygame"
