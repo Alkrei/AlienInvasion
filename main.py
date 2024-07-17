@@ -20,7 +20,7 @@ class MainMenu:
         self.Start_button = None
         self.Records_button = None
         self.Quite_button = None
-        self.screen = pygame.display.set_mode((0, 0))
+        self.screen = pygame.display.set_mode((1920, 1080))
         pygame.display.set_icon(pygame.image.load("graphics/Aliens/Alien/Design_1/Move/move_1.png"))
         pygame.display.set_caption("AlienInvasion")
         self.manager = pygame_gui.UIManager((self.screen.get_size()), 'managers/main_menu.json')
