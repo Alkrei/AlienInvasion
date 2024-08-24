@@ -2,59 +2,28 @@ import pickle
 import sys
 import pygame
 import obstacle
-import pygame_gui
 import json
-from pygame_gui.core import ObjectID
-from pygame_gui.elements import UIButton
 from time import sleep
 from random import randint, choice
 from game_stats import GameStats
 from gun import Gun
-from settings import Settings
 from bullet import Bullet
 from lasers import Laser
-from alien import Alien, Alien_Elite, Alien_Officer, Alien_Sniper, Alien_Juggernaut, Extra, Bomber, MotherShip, \
-    Extra_Alien_Elite, Extra_Alien, SuperExtra
-from stars import Big_Star, Star
+from alien import Alien, AlienElite, AlienOfficer, AlienSniper, AlienJuggernaut, Extra, Bomber, MotherShip, \
+    ExtraAlienElite, ExtraAlien, SuperExtra
+from stars import BigStar, Star
 from fonts import f2, f3
+from buttons import Button
 
 
 class AlienInvasion:
-    def __init__(self, screen, clock):
+    def __init__(self, surface, screen, settings, clock):
+        self.surface = surface
         self.screen = screen
+        self.settings = settings
         self.clock = clock
-        self.settings = Settings()
-        self.settings.width = self.screen.get_rect().width
-        self.settings.height = self.screen.get_rect().height
-        with open('saves/score.json', 'r') as score:
-            self.score = json.load(score)
-        self.game_score = 0
-        self.difficulty_level = 1
-        if self.score == 0:
-            with open('saves/difficulty_level.json', 'w') as d_l:
-                json.dump(self.difficulty_level, d_l)
 
-            self._create_obs()
-            self.stats = GameStats()
-            with open('saves/game_stats.pickle', 'wb') as g_s:
-                pickle.dump(self.stats, g_s)
-        else:
-            with open('saves/difficulty_level.json', 'r') as d_l:
-                self.difficulty_level = json.load(d_l)
-
-            with open('saves/game_stats.pickle', 'rb') as g_s:
-                self.stats = pickle.load(g_s)
-                if self.stats.gun_booster == 1:
-                    self.stats.gun_boost_1(self.settings)
-                elif self.stats.gun_booster == 2:
-                    self.stats.gun_boost_2(self.settings)
-            with open('saves/blocks.json', 'r') as b:
-                blocks = json.load(b)
-                self.blocks = pygame.sprite.Group()
-                for key in blocks.keys():
-                    block_list = blocks.get(key)
-                    block = obstacle.BLock(block_list[0], block_list[1], self.screen, block_list[2], block_list[3])
-                    self.blocks.add(block)
+        self.init_data()
         self.gun = pygame.sprite.GroupSingle(Gun(self))
         self.opening = True
         self.game_active = True
@@ -76,13 +45,8 @@ class AlienInvasion:
         self.game_status = ""
         self.text = ""
         self.surf = pygame.image.load("graphics/game_end.png")
-        self.manager = pygame_gui.UIManager((self.screen.get_size()), 'managers/score.json')
-        self.Main_menu_button = UIButton(relative_rect=pygame.Rect((825, 800), (256, 64)),
-                                         text="Main Menu",
-                                         manager=self.manager,
-                                         object_id=ObjectID(class_id="button"))
-        with open('saves/record.json', 'r') as rec:
-            self.record_score = json.load(rec)
+        self.main_menu_button = Button(825, 800, 256, 64, self.settings.button_inactive,
+                                       self.settings.button_active, self.settings, f2, 'Main Menu', lambda: quit())
 
         # Ammo
         self.bullets = pygame.sprite.Group()
@@ -102,8 +66,8 @@ class AlienInvasion:
             self.extra_event = 0
         else:
             self.fleet_rows = 6
-            self.extra_event = randint(1, 10)
-            if self.extra_event != 10:
+            self.extra_event = randint(1, 7)
+            if self.extra_event != 7:
                 self.medium_alien_type = randint(1, 2)
                 self.last_alien_type = choice(["elite", "juggernaut"])
             else:
@@ -120,28 +84,62 @@ class AlienInvasion:
         # Other setup
         self.stars = pygame.sprite.Group()
 
-        # health setup
-        self.live_surf = self.image = pygame.transform.scale(pygame.image.load("graphics/Gun_0/Gun_0.png"), (60, 32))
-        self.live_x_start_pos = self.settings.width - (self.live_surf.get_size()[0] * 2 + 20)
+        # gun setup
+        self.live_surf = pygame.transform.scale(pygame.image.load("graphics/Gun_0/Gun_0.png"), (60, 32))
+        self.live_x_start_pos = self.settings.width - (self.live_surf.get_size()[0] + 20)
         self.live_y_start_pos = self.settings.height - (self.live_surf.get_size()[0] * 2 + 20)
 
-        self.hp_left_surf = self.image = pygame.transform.scale(pygame.image.load("graphics/HP.png"), (36, 32))
-        self.hp_x_start_pos = 0 + (self.hp_left_surf.get_size()[0] * 2 + 20)
-        self.hp_y_start_pos = self.settings.height - (self.hp_left_surf.get_size()[0] * 2 + 20)
+        self.hp_left_surf = pygame.transform.scale(pygame.image.load("graphics/HP.png"), (36, 32))
+        self.hp_x_start_pos = 0 + self.hp_left_surf.get_size()[0]
+        self.hp_y_start_pos = self.settings.height - (self.hp_left_surf.get_size()[0] + 20)
 
+        # fleet and space
         self._create_fleet()
         self._create_sky()
         self.fleet_power = 0
         self.fleet_power = len(self.aliens)
         self.speed_rise = 0.5
 
+    def init_data(self):
+        with open('saves/score.json', 'r') as score:
+            self.score = json.load(score)
+        self.game_score = 0
+        self.difficulty_level = 1
+
+        if self.score == 0:
+            with open('saves/difficulty_level.json', 'w') as d_l:
+                json.dump(self.difficulty_level, d_l)
+
+            self._create_obs()
+            self.stats = GameStats()
+            with open('saves/game_stats.pickle', 'wb') as g_s:
+                pickle.dump(self.stats, g_s)
+        else:
+            with open('saves/difficulty_level.json', 'r') as d_l:
+                self.difficulty_level = json.load(d_l)
+            with open('saves/game_stats.pickle', 'rb') as g_s:
+                self.stats = pickle.load(g_s)
+                if self.stats.gun_booster == 1:
+                    self.stats.gun_boost_1(self.settings)
+                elif self.stats.gun_booster == 2:
+                    self.stats.gun_boost_2(self.settings)
+            with open('saves/blocks.json', 'r') as b:
+                blocks = json.load(b)
+                self.blocks = pygame.sprite.Group()
+                for key in blocks.keys():
+                    block_list = blocks.get(key)
+                    block = obstacle.BLock(block_list[0], block_list[1], self.surface, block_list[2], block_list[3])
+                    self.blocks.add(block)
+        with open('saves/record.json', 'r') as rec:
+            self.record_score = json.load(rec)
+
     def _create_obs(self):
         self.blocks = pygame.sprite.Group()
         self.obstacle_x_pos = [num * (self.settings.width // self.settings.obstacles_amount) for num in
                                range(self.settings.obstacles_amount)]
         self.obstacle = obstacle.Obstacle()
-        self.obstacle.create_multiple_obstacles(*self.obstacle_x_pos, x_pos=self.settings.width / 15, y_pos=800,
-                                                size=self.settings.block_size, screen=self.screen,
+        self.obstacle.create_multiple_obstacles(*self.obstacle_x_pos, x_pos=self.settings.width / 15, y_pos=750,
+                                                size=self.settings.block_size, screen=self.surface,
                                                 blocks=self.blocks)
 
     def _create_sky(self):
@@ -160,7 +158,7 @@ class AlienInvasion:
     def _create_star(self, column_num, row_num):
         x = randint(0, 100)
         if x > 80:
-            star = Big_Star(self)
+            star = BigStar(self)
         else:
             star = Star(self)
         star_width, star_height = star.rect.size
@@ -177,21 +175,21 @@ class AlienInvasion:
             for column_num in range(number_columns):
                 self._create_alien(column_num, row_num, alien_design)
 
-    def create_medium_aliens(self, alien_design):
+    def _create_medium_aliens(self, alien_design):
         if self.medium_alien_type == 1:
             shield_percentage = randint(1, 4)
             if shield_percentage == 4:
-                return Alien_Officer(self, alien_design=alien_design, hp=2)
+                return AlienOfficer(self, alien_design=alien_design, hp=2)
             else:
-                return Alien_Officer(self, alien_design=alien_design)
+                return AlienOfficer(self, alien_design=alien_design)
         elif self.medium_alien_type == 2:
             shield_percentage = randint(1, 4)
             if shield_percentage == 4:
-                return Alien_Sniper(self, alien_design=alien_design, hp=2)
+                return AlienSniper(self, alien_design=alien_design, hp=2)
             else:
-                return Alien_Sniper(self, alien_design=alien_design)
+                return AlienSniper(self, alien_design=alien_design)
 
-    def create_low_alien(self, alien_design):
+    def _create_low_alien(self, alien_design):
         shield_percentage = randint(1, 4)
         if shield_percentage == 4:
             return Alien(self, alien_design=alien_design, hp=2)
@@ -200,28 +198,28 @@ class AlienInvasion:
 
     def _create_alien(self, column_num, row_num, alien_design):
         if self.difficulty_level <= 3:
-            alien = self.create_low_alien(alien_design)
+            alien = self._create_low_alien(alien_design)
         elif 3 < self.difficulty_level <= 6:
             if row_num == 0 or row_num == 1:
-                alien = self.create_medium_aliens(alien_design)
+                alien = self._create_medium_aliens(alien_design)
             else:
-                alien = self.create_low_alien(alien_design)
+                alien = self._create_low_alien(alien_design)
         else:
             if self.extra_event == 10:
                 if row_num <= 2:
-                    alien = Extra_Alien_Elite(self)
+                    alien = ExtraAlienElite(self)
                 else:
-                    alien = Extra_Alien(self)
+                    alien = ExtraAlien(self)
             else:
                 if row_num == 0:
                     if self.last_alien_type == "elite":
-                        alien = Alien_Elite(self)
+                        alien = AlienElite(self)
                     elif self.last_alien_type == "juggernaut":
-                        alien = Alien_Juggernaut(self)
+                        alien = AlienJuggernaut(self)
                 elif row_num == 1 or row_num == 2:
-                    alien = self.create_medium_aliens(alien_design)
+                    alien = self._create_medium_aliens(alien_design)
                 else:
-                    alien = self.create_low_alien(alien_design)
+                    alien = self._create_low_alien(alien_design)
         alien_width, alien_height = alien.rect.size
 
         alien.root_pos_x = alien_width + 1.5 * alien_width * column_num
@@ -274,7 +272,7 @@ class AlienInvasion:
 
     def _check_aliens_bottom(self):
         for alien in self.aliens.sprites():
-            if alien.rect.bottom >= self.screen.get_rect().bottom:
+            if alien.rect.bottom >= self.surface.get_rect().bottom:
                 self._gun_hit()
                 break
 
@@ -363,11 +361,11 @@ class AlienInvasion:
         for live in range(self.stats.guns_left - 1):
             x = self.live_x_start_pos
             y = self.live_y_start_pos + (live * self.live_surf.get_size()[0] + 10)
-            self.screen.blit(self.live_surf, (x, y))
+            self.surface.blit(self.live_surf, (x, y))
         for hp in range(self.stats.hp):
-            x = self.hp_x_start_pos + (hp * self.hp_left_surf.get_size()[0] + 10)
+            x = self.hp_x_start_pos + (hp * (self.hp_left_surf.get_size()[0] + 10))
             y = self.hp_y_start_pos
-            self.screen.blit(self.hp_left_surf, (x, y))
+            self.surface.blit(self.hp_left_surf, (x, y))
 
     def _extra_alien_timer(self):
         if len(self.extra) == 0:
@@ -454,7 +452,7 @@ class AlienInvasion:
 
     def open_scene(self):
         alien_first = self.aliens.sprites()[0]
-        self.screen.blit(self.mother_ship.image, self.mother_ship.rect)
+        self.surface.blit(self.mother_ship.image, self.mother_ship.rect)
         if self.mother_ship.rect.y != 0 - self.mother_ship.rect.height // 2:
             self.mother_ship.rect.y += 1
             alien_first.rect.y += 1
@@ -508,12 +506,15 @@ class AlienInvasion:
 
         self._check_aliens_bottom()
 
+    def quit(self):
+        self.game_end_active = False
+
     def _update_screen(self):
-        self.screen.fill(self.settings.bc_color)
-        self.stars.draw(self.screen)
-        self.extra.draw(self.screen)
-        self.aliens.draw(self.screen)
-        self.screen.blit(self.mother_ship.image, self.mother_ship.rect)
+        self.surface.fill(self.settings.bc_color)
+        self.stars.draw(self.surface)
+        self.extra.draw(self.surface)
+        self.aliens.draw(self.surface)
+        self.surface.blit(self.mother_ship.image, self.mother_ship.rect)
         self.gun.sprite.blit()
         self.display_lives()
         for bullet in self.bullets.sprites():
@@ -524,6 +525,7 @@ class AlienInvasion:
             block.draw()
         for bomb in self.bombs.sprites():
             bomb.draw()
+        self.screen.blit(pygame.transform.scale(self.surface, self.screen.get_rect().size), (0, 0))
         pygame.display.update()
         self.clock.tick(self.settings.FPS)
 
@@ -533,30 +535,21 @@ class AlienInvasion:
             self.score = 0
             json.dump(self.score, score)
         while self.game_end_active:
-            time_delta = self.clock.tick(self.settings.FPS)
-            for event in pygame.event.get():
-                if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                    if event.ui_element == self.Main_menu_button:
-                        self.game_end_active = False
-
-                self.manager.process_events(event)
-
-            self.stars.draw(self.screen)
-            self.extra.draw(self.screen)
-            self.aliens.draw(self.screen)
+            self.stars.draw(self.surface)
+            self.extra.draw(self.surface)
+            self.aliens.draw(self.surface)
             self.gun.sprite.blit()
             self.display_lives()
 
-            self.screen.blit(self.surf, self.surf.get_rect())
-            self.screen.blit(f2.render(f"Record: {self.record_score}", False, self.settings.WHITE),
-                             (self.screen.get_rect().centerx - 590, 400))
-            self.screen.blit(f2.render(f"Score: {self.score}", False, self.settings.RED),
-                             (self.screen.get_rect().centerx - 590, 600))
-            self.screen.blit(f3.render(self.text, False, self.settings.WHITE),
-                             (self.screen.get_rect().centerx - (len(self.text) * 25), 200))
-            self.manager.draw_ui(self.screen)
-
-            self.manager.update(time_delta)
+            self.surface.blit(self.surf, self.surf.get_rect())
+            self.surface.blit(f2.render(f"Record: {self.record_score}", False, self.settings.WHITE),
+                              (self.surface.get_rect().centerx - 590, 400))
+            self.surface.blit(f2.render(f"Score: {self.score}", False, self.settings.RED),
+                              (self.surface.get_rect().centerx - 590, 600))
+            self.surface.blit(f3.render(self.text, False, self.settings.WHITE),
+                              (self.surface.get_rect().centerx - (len(self.text) * 25), 200))
+            self.main_menu_button.button(self.surface, self.screen)
+            self.screen.blit(pygame.transform.scale(self.surface, self.screen.get_rect().size), (0, 0))
             pygame.display.update()
         with open('saves/game_stats.pickle', 'wb') as g_s:
             self.stats.reset()
@@ -569,38 +562,29 @@ class AlienInvasion:
         self.text = "Victory"
         result = self.score + self.game_score
         while self.game_end_active:
-            time_delta = self.clock.tick(self.settings.FPS)
-            for event in pygame.event.get():
-                if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                    if event.ui_element == self.Main_menu_button:
-                        self.game_end_active = False
-
-                self.manager.process_events(event)
-
-            self.stars.draw(self.screen)
-            self.extra.draw(self.screen)
-            self.aliens.draw(self.screen)
+            self.stars.draw(self.surface)
+            self.extra.draw(self.surface)
+            self.aliens.draw(self.surface)
             self.gun.sprite.blit()
             self.display_lives()
 
-            self.screen.blit(self.surf, self.surf.get_rect())
+            self.surface.blit(self.surf, self.surf.get_rect())
             if result > self.record_score:
-                self.screen.blit(f2.render(f"Record: {self.record_score}", False, self.settings.WHITE),
-                                 (self.screen.get_rect().centerx - 590, 400))
-                self.screen.blit(f2.render(f"Score: {self.score} + {self.game_score} = {result}", False,
-                                           self.settings.YELLOW), (self.screen.get_rect().centerx - 590, 600))
-                self.screen.blit(f2.render("NEW RECORD", False, self.settings.YELLOW),
-                                 (self.screen.get_rect().centerx - 590, 500))
+                self.surface.blit(f2.render(f"Record: {self.record_score}", False, self.settings.WHITE),
+                                  (self.surface.get_rect().centerx - 590, 400))
+                self.surface.blit(f2.render(f"Score: {self.score} + {self.game_score} = {result}", False,
+                                            self.settings.YELLOW), (self.surface.get_rect().centerx - 590, 600))
+                self.surface.blit(f2.render("NEW RECORD", False, self.settings.YELLOW),
+                                  (self.surface.get_rect().centerx - 590, 500))
             else:
-                self.screen.blit(f2.render(f"Record: {self.record_score}", False, self.settings.YELLOW),
-                                 (self.screen.get_rect().centerx - 590, 400))
-                self.screen.blit(f2.render(f"Score: {self.score} + {self.game_score} = {result}", False,
-                                           self.settings.WHITE), (self.screen.get_rect().centerx - 590, 600))
-            self.screen.blit(f3.render(self.text, False, self.settings.WHITE),
-                             (self.screen.get_rect().centerx - (len(self.text) * 25), 200))
-            self.manager.draw_ui(self.screen)
-
-            self.manager.update(time_delta)
+                self.surface.blit(f2.render(f"Record: {self.record_score}", False, self.settings.YELLOW),
+                                  (self.surface.get_rect().centerx - 590, 400))
+                self.surface.blit(f2.render(f"Score: {self.score} + {self.game_score} = {result}", False,
+                                            self.settings.WHITE), (self.surface.get_rect().centerx - 590, 600))
+            self.surface.blit(f3.render(self.text, False, self.settings.WHITE),
+                              (self.surface.get_rect().centerx - (len(self.text) * 25), 200))
+            self.main_menu_button.button(self.surface, self.screen)
+            self.screen.blit(pygame.transform.scale(self.surface, self.screen.get_rect().size), (0, 0))
             pygame.display.update()
         with open('saves/score.json', 'w') as score:
             self.score += self.game_score

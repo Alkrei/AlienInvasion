@@ -1,6 +1,6 @@
 import pygame
 from PIL import Image
-from pygame.sprite import Sprite
+from pygame.sprite import  Sprite
 
 
 class BLock(Sprite):

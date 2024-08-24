@@ -5,7 +5,7 @@ from pygame.sprite import Sprite
 class Laser(Sprite):
     def __init__(self, game, alien):
         super().__init__()
-        self.screen = game.screen
+        self.screen = game.surface
         self.laser_speed = alien.laser_speed
         self.damage = alien.laser_power
         self.laser_size = alien.laser_size
@@ -36,7 +36,7 @@ class Laser(Sprite):
 class BombLaser(Sprite):
     def __init__(self, game, alien):
         super().__init__()
-        self.screen = game.screen
+        self.screen = game.surface
         self.laser_speed = alien.laser_speed
         self.damage = alien.laser_power
         self.destroy = False
@@ -63,6 +63,7 @@ class BombLaser(Sprite):
                 self.kill()
             else:
                 self.image = pygame.transform.scale(self.destroy_sprites[int(self.current_sprite)], (120, 64))
+                self.y += 5
         else:
             self.current_sprite += 0.1
 

@@ -1,11 +1,12 @@
 import pygame
+from pygame.sprite import Sprite
 
 
-class Gun(pygame.sprite.Sprite):
+class Gun(Sprite):
     def __init__(self, game):
         super().__init__()
         self.timer = None
-        self.screen = game.screen
+        self.screen = game.surface
         self.settings = game.settings
         self.booster = self.settings.gun_booster
         self.image = pygame.transform.scale(pygame.image.load(f"graphics/Gun_{self.booster}/Gun_{self.booster}.png"), (60, 32))

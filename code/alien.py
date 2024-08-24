@@ -7,7 +7,7 @@ from lasers import BombLaser
 class Alien(Sprite):
     def __init__(self, game, alien_design, hp=1):
         super().__init__()
-        self.screen = game.screen
+        self.screen = game.surface
         self.settings = game.settings
         self.laser_speed = 5
         self.laser_power = 1
@@ -84,7 +84,7 @@ class Alien(Sprite):
         self.rect.x = self.x
 
 
-class Alien_Officer(Alien):
+class AlienOfficer(Alien):
     def __init__(self, game, alien_design, hp=1):
         super().__init__(game, alien_design, hp)
         self.laser_speed = 7.5
@@ -105,7 +105,7 @@ class Alien_Officer(Alien):
         self.image = pygame.transform.scale(self.move_sprites[self.current_sprite], (60, 32))
 
 
-class Alien_Sniper(Alien):
+class AlienSniper(Alien):
     def __init__(self, game, alien_design, hp=1):
         super().__init__(game, alien_design, hp)
         self.laser_speed = 10
@@ -126,7 +126,7 @@ class Alien_Sniper(Alien):
         self.image = pygame.transform.scale(self.move_sprites[self.current_sprite], (60, 32))
 
 
-class Alien_Elite(Alien):
+class AlienElite(Alien):
     def __init__(self, game, hp=1):
         super().__init__(game, hp)
         self.laser_speed = 7.5
@@ -142,7 +142,7 @@ class Alien_Elite(Alien):
         self.image = pygame.transform.scale(self.move_sprites[self.current_sprite], (60, 32))
 
 
-class Extra_Alien_Elite(Alien):
+class ExtraAlienElite(Alien):
     def __init__(self, game, hp=1):
         super().__init__(game, hp)
         self.laser_speed = 10
@@ -161,7 +161,7 @@ class Extra_Alien_Elite(Alien):
         self.image = pygame.transform.scale(self.move_sprites[self.current_sprite], (60, 32))
 
 
-class Extra_Alien(Alien):
+class ExtraAlien(Alien):
     def __init__(self, game, hp=1):
         super().__init__(game, hp)
         self.laser_speed = 7.5
@@ -180,7 +180,7 @@ class Extra_Alien(Alien):
         self.image = pygame.transform.scale(self.move_sprites[self.current_sprite], (60, 32))
 
 
-class Alien_Juggernaut(Alien):
+class AlienJuggernaut(Alien):
     def __init__(self, game, hp=1):
         super().__init__(game, hp)
         self.laser_speed = 5
@@ -202,7 +202,7 @@ class Alien_Juggernaut(Alien):
 class Extra(Sprite):
     def __init__(self, game, side):
         super().__init__()
-        self.screen = game.screen
+        self.screen = game.surface
         self.settings = game.settings
         self.current_sprite = 0
         self.destroy = False
@@ -240,7 +240,7 @@ class Extra(Sprite):
 class SuperExtra(Sprite):
     def __init__(self, game, side):
         super().__init__()
-        self.screen = game.screen
+        self.screen = game.surface
         self.settings = game.settings
         self.current_sprite = 0
         self.destroy = False
@@ -317,7 +317,7 @@ class Bomber(Extra):
 class MotherShip(Sprite):
     def __init__(self, game):
         super().__init__()
-        self.screen = game.screen
+        self.screen = game.surface
         self.settings = game.settings
         self.type = game.last_alien_type
         if self.type == "juggernaut":
