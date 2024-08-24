@@ -46,7 +46,7 @@ class AlienInvasion:
         self.text = ""
         self.surf = pygame.image.load("graphics/game_end.png")
         self.main_menu_button = Button(825, 800, 256, 64, self.settings.button_inactive,
-                                       self.settings.button_active, self.settings, f2, 'Main Menu', lambda: quit())
+                                       self.settings.button_active, self.settings, f2, 'Main Menu', lambda: self.quit_func())
 
         # Ammo
         self.bullets = pygame.sprite.Group()
@@ -506,7 +506,7 @@ class AlienInvasion:
 
         self._check_aliens_bottom()
 
-    def quit(self):
+    def quit_func(self):
         self.game_end_active = False
 
     def _update_screen(self):
@@ -535,6 +535,9 @@ class AlienInvasion:
             self.score = 0
             json.dump(self.score, score)
         while self.game_end_active:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.quit_func()
             self.stars.draw(self.surface)
             self.extra.draw(self.surface)
             self.aliens.draw(self.surface)
@@ -551,6 +554,7 @@ class AlienInvasion:
             self.main_menu_button.button(self.surface, self.screen)
             self.screen.blit(pygame.transform.scale(self.surface, self.screen.get_rect().size), (0, 0))
             pygame.display.update()
+            self.clock.tick(self.settings.FPS)
         with open('saves/game_stats.pickle', 'wb') as g_s:
             self.stats.reset()
             pickle.dump(self.stats, g_s)
@@ -562,6 +566,9 @@ class AlienInvasion:
         self.text = "Victory"
         result = self.score + self.game_score
         while self.game_end_active:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.quit_func()
             self.stars.draw(self.surface)
             self.extra.draw(self.surface)
             self.aliens.draw(self.surface)
@@ -586,6 +593,7 @@ class AlienInvasion:
             self.main_menu_button.button(self.surface, self.screen)
             self.screen.blit(pygame.transform.scale(self.surface, self.screen.get_rect().size), (0, 0))
             pygame.display.update()
+            self.clock.tick(self.settings.FPS)
         with open('saves/score.json', 'w') as score:
             self.score += self.game_score
             json.dump(self.score, score)
